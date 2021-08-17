@@ -9,6 +9,9 @@ class TimeService(
         const val THIRTY_MINUTES_TO_MILLIS = 1000 * 60 * 30
     }
 
+    /**
+     * リモートから更新してから30分経った時、true
+     */
     fun shouldLoadFromRemote(): Boolean {
         val savedTime = timeRepository.loadRemoteDataSavedTime()
 

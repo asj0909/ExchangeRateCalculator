@@ -7,13 +7,13 @@ class CurrencyService(
     private val repositoryImpl: CurrencyRepository = CurrencyRepositoryImpl()
 ) {
 
-    fun getCurrencyList(): Single<CurrencyList> = repositoryImpl.getCurrencyList()
+    fun load(): Single<CurrencyList> = repositoryImpl.load()
 
 }
 
 interface CurrencyRepository {
 
-    fun getCurrencyList(): Single<CurrencyList>
+    fun load(): Single<CurrencyList>
 
 }
 

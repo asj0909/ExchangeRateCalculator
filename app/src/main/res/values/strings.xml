@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">ExchangeRateCalculator</string>
+
+
+    <string name="local_network_error_text">ネットワークエラーが発生しました。 \nネットワーク接続後、お試しください。</string>
+    <string name="server_error_text">サーバーエラー発生しました。\nしばらく時間を置いてからお試しください。</string>
+    <string name="confirm_text">確認</string>
 </resources>

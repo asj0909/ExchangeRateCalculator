@@ -8,21 +8,21 @@ import jp.co.android.exchangeratecalculator.domain.ExchangeRate
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-class ExchangeRateRepositoryImpl(
+class ExchangeRateRemoteRepositoryImpl(
     private val service: Service = createHttpClient(serviceClass = Service::class.java)
 ): ExchangeRateRemoteRepository {
 
     interface Service {
         @GET(ApiUrl.LIVE)
 
-        fun getUsdToOthersExchangeRateList(
+        fun load(
             @Query("access_key") accessKey: String = ApiUrl.API_ACCESS_KEY
         ): Single<ExchangeRateResponseData>
 
     }
 
-    override fun loadUsdToOthersExchangeRateListFromRemote(): Single<ExchangeRate> {
-        return service.getUsdToOthersExchangeRateList().map { convert(it) }
+    override fun load(): Single<ExchangeRate> {
+        return service.load().map { convert(it) }
     }
 
     private fun convert(responseData: ExchangeRateResponseData): ExchangeRate {

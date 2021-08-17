@@ -15,20 +15,26 @@ class CurrencyRepositoryImpl(
     interface Service {
 
         @GET(ApiUrl.LIST)
-        fun getList(
+        fun load(
             @Query("access_key") accessKey: String = ApiUrl.API_ACCESS_KEY
         ): Single<ListResponseData>
 
     }
 
-    override fun getCurrencyList(): Single<CurrencyList> = service.getList().map { convert(it) }
+    override fun load(): Single<CurrencyList> {
+        return service.load().map {
+            convert(it)
+        }
+    }
 
     private fun convert(responseData: ListResponseData): CurrencyList =
-        responseData.currencies?.let { CurrencyList(it.keys.toList()) } ?: CurrencyList(listOf())
+        responseData.currencies?.let {
+            CurrencyList(it.keys.toList())
+        } ?: CurrencyList(listOf())
 }
 
 data class ListResponseData(
-    val success: Boolean?,
+    val success: Boolean,
     val terms: String?,
     val privacy: String?,
     val currencies: Map<String, String>?

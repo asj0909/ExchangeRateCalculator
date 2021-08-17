@@ -7,6 +7,9 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
+/**
+ * WebAPIクライアント生成
+ */
 fun <T> createHttpClient(
     serviceClass: Class<T>,
     timeoutSec: Long = 10L

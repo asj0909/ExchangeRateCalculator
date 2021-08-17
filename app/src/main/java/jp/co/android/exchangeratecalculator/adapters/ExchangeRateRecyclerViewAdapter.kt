@@ -9,6 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import jp.co.android.exchangeratecalculator.R
 import kotlinx.android.synthetic.main.cell_view.view.*
 
+/**
+ * 為替レートリスト表示用Adapter
+ */
 class ExchangeRateRecyclerViewAdapter(
     private val context: Context
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -36,25 +39,5 @@ class ExchangeRateRecyclerViewAdapter(
             itemView.currency_name.text = currencyName
             itemView.exchange_rate.text = exchangeRate
         }
-    }
-
-    fun updateItems(newList: List<Pair<String, String>>) {
-        val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
-            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-                list[oldItemPosition] == newList[newItemPosition]
-
-            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-                true
-
-            override fun getOldListSize(): Int = list.size
-
-            override fun getNewListSize(): Int = newList.size
-
-            override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? =
-                Pair(list[oldItemPosition], newList[newItemPosition])
-
-        }, false)
-        diffResult.dispatchUpdatesTo(this)
-        this.list = newList
     }
 }

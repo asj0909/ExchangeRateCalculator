@@ -6,7 +6,8 @@ object ApiUrl {
 
     const val API_BASE_URL = "http://api.currencylayer.com/"
 
-    const val LIST = API_BASE_URL + "list"
+    const val LIST = "list"
 
-    const val LIVE = API_BASE_URL + "live"
+    const val LIVE = "live"
+
 }

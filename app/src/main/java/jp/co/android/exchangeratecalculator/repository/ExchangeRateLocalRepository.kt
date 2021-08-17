@@ -19,7 +19,7 @@ class ExchangeRateLocalRepositoryImpl(
         const val PREFS_EXCHANGE_RATES_KEY = "exchange_rates"
     }
 
-    override fun loadUsdToOthersExchangeRateListFromLocal(): ExchangeRate {
+    override fun load(): ExchangeRate {
         val json: String? = prefs?.getString(PREFS_EXCHANGE_RATES_KEY, null)
         val type: Type = object : TypeToken<ArrayList<Pair<String, String>>>() {}.type
         val loadedArrayList =
@@ -27,7 +27,7 @@ class ExchangeRateLocalRepositoryImpl(
         return ExchangeRate(loadedArrayList.toList())
     }
 
-    override fun saveUsdToOthersExchangeRateListToLocal(exchangeRates: ExchangeRate) {
+    override fun save(exchangeRates: ExchangeRate) {
         val editor = prefs?.edit()
         val json: String = gson.toJson(exchangeRates.liveList.toTypedArray())
         editor?.putString(PREFS_EXCHANGE_RATES_KEY, json)

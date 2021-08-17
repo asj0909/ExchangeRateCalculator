@@ -1,5 +1,6 @@
 package jp.co.android.exchangeratecalculator.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -8,7 +9,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
+import jp.co.android.exchangeratecalculator.NetworkUtil
 import jp.co.android.exchangeratecalculator.Utils
+import jp.co.android.exchangeratecalculator.application.MainApplication
 import jp.co.android.exchangeratecalculator.domain.CurrencyService
 import jp.co.android.exchangeratecalculator.domain.ExchangeRateService
 import jp.co.android.exchangeratecalculator.domain.TimeService
@@ -16,12 +19,18 @@ import jp.co.android.exchangeratecalculator.domain.TimeService
 class MainViewModel(
     private val currencyService: CurrencyService = CurrencyService(),
     private val exchangeRateService: ExchangeRateService = ExchangeRateService(),
-    private val time: TimeService = TimeService()
+    private val time: TimeService = TimeService(),
+    private val context: Context = MainApplication.applicationContext()
 ) : ViewModel(), LifecycleObserver {
 
     companion object {
         const val REPLACED_CURRENCY_NAME_RANGE_START = 0
         const val REPLACED_CURRENCY_NAME_RANGE_END = 3
+        const val SELECT_TEXT = "Please Select"
+    }
+
+    enum class ErrorType {
+        FROM_LOCAL, FROM_REMOTE_CURRENCY, FROM_REMOTE_CHANGE_RATE
     }
 
     private val disposables: CompositeDisposable = CompositeDisposable()
@@ -33,39 +42,77 @@ class MainViewModel(
         MutableLiveData()
     val exchangeRateList: LiveData<List<Pair<String, String>>> = mutableExchangeRateList
 
+    private val mutableError: MutableLiveData<ErrorType> = MutableLiveData()
+    val error: LiveData<ErrorType> = mutableError
+
     var selectedCurrencyName: String = ""
 
     private var usdToSelectedCurrencyExchangeRate: Double = 0.0
     private var usdToOthersExchangeRateList: List<Pair<String, String>> = listOf()
 
-    fun shouldLoadFromRemote() : Boolean = time.shouldLoadFromRemote()
 
-    fun setUsdToSelectedCurrencyExchangeRate() {
-        if (shouldLoadFromRemote()) {
-            exchangeRateService.getUsdToOthersExchangeRateListFromRemote()
+    private fun isNetworkAvailable() : Boolean = NetworkUtil.isNetworkAvailable(context)
+
+    /**
+     * 通貨リスト取得
+     */
+    fun getCurrencyList() {
+        if (!isNetworkAvailable()) {
+            mutableError.value = ErrorType.FROM_LOCAL
+            return
+        }
+        currencyService
+            .load()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                mutableCurrencyList.value = listOf(SELECT_TEXT).plus(it.currencyList)
+            }, {
+                mutableError.value = ErrorType.FROM_REMOTE_CURRENCY
+            })
+            .addTo(disposables)
+    }
+
+    /**
+     *  「USD基準選択された通貨の為替レートセット
+     */
+    fun setUsdToOthersExchangeRateList() {
+        if (time.shouldLoadFromRemote()) {
+            if (!isNetworkAvailable()) {
+                mutableError.value = ErrorType.FROM_LOCAL
+                return
+            }
+            // 為替レートリスト取得
+            exchangeRateService.loadFromRemote()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnSuccess { exchangeRate ->
+                .subscribe({ exchangeRate ->
+                    // 成功時、ローカルへ保存
                     time.saveCurrentTime()
-                    exchangeRateService.saveUsdToOthersExchangeRateListToLocal(exchangeRate)
+                    exchangeRateService.saveToLocal(exchangeRate)
                     usdToOthersExchangeRateList = exchangeRate.liveList
-                    setSelectedCurrencyToOthersExchangeRate()
-                }
-                .subscribe()
+                    setUsdToSelectedCurrencyExchangeRate()
+                }, {
+                    mutableError.value = ErrorType.FROM_REMOTE_CHANGE_RATE
+                })
                 .addTo(disposables)
         } else {
-            val exchangeRates = exchangeRateService.getUsdToOthersExchangeRateListFromLocal()
+            val exchangeRates = exchangeRateService.loadFromLocal()
             usdToOthersExchangeRateList = exchangeRates.liveList
-            setSelectedCurrencyToOthersExchangeRate()
+            setUsdToSelectedCurrencyExchangeRate()
         }
     }
 
+    /**
+     * 為替レートリスト更新
+     */
     fun updateExchangeRateList(inputString: String) {
         if (inputString.isEmpty()) return
 
         val list = usdToOthersExchangeRateList.map {
             val inputNumber = inputString.toDouble()
             val usdToTargetExchangeRate = it.second.toDouble()
+            // 通貨名更新
             val displayedCurrencyName = it.first.replaceRange(
                 REPLACED_CURRENCY_NAME_RANGE_START,
                 REPLACED_CURRENCY_NAME_RANGE_END,
@@ -73,6 +120,7 @@ class MainViewModel(
             )
             it.copy(
                 first = displayedCurrencyName,
+                // 為替レート更新
                 second = Utils.calculateSelectedCurrencyToTargetExchangeRate(
                     usdToSelectedCurrencyExchangeRate,
                     inputNumber,
@@ -83,23 +131,13 @@ class MainViewModel(
         mutableExchangeRateList.value = list
     }
 
-    fun getCurrencyList() {
-        currencyService
-            .getCurrencyList()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnSuccess {
-                mutableCurrencyList.value = listOf("Please Select").plus(it.currencyList)
-            }
-            .subscribe()
-            .addTo(disposables)
-    }
-
-    private fun setSelectedCurrencyToOthersExchangeRate() {
+    /**
+     * USD基準選択された通貨の為替レートセット
+     */
+    private fun setUsdToSelectedCurrencyExchangeRate() =
         usdToOthersExchangeRateList.forEach {
             if ("USD$selectedCurrencyName" == it.first) {
                 usdToSelectedCurrencyExchangeRate = it.second.toDouble()
             }
         }
-    }
 }
