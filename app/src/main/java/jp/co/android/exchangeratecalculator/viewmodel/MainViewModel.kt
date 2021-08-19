@@ -9,17 +9,15 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
-import jp.co.android.exchangeratecalculator.NetworkUtil
-import jp.co.android.exchangeratecalculator.Utils
+import jp.co.android.exchangeratecalculator.utils.NetworkUtil
+import jp.co.android.exchangeratecalculator.utils.CalculatorUtil
 import jp.co.android.exchangeratecalculator.application.MainApplication
 import jp.co.android.exchangeratecalculator.domain.CurrencyService
 import jp.co.android.exchangeratecalculator.domain.ExchangeRateService
-import jp.co.android.exchangeratecalculator.domain.TimeService
 
 class MainViewModel(
     private val currencyService: CurrencyService = CurrencyService(),
     private val exchangeRateService: ExchangeRateService = ExchangeRateService(),
-    private val time: TimeService = TimeService(),
     private val context: Context = MainApplication.applicationContext()
 ) : ViewModel(), LifecycleObserver {
 
@@ -30,7 +28,9 @@ class MainViewModel(
     }
 
     enum class ErrorType {
-        FROM_LOCAL, FROM_REMOTE_CURRENCY, FROM_REMOTE_CHANGE_RATE
+        FROM_LOCAL,
+        FROM_REMOTE_CURRENCY,
+        FROM_REMOTE_CHANGE_RATE
     }
 
     private val disposables: CompositeDisposable = CompositeDisposable()
@@ -51,7 +51,7 @@ class MainViewModel(
     private var usdToOthersExchangeRateList: List<Pair<String, String>> = listOf()
 
 
-    private fun isNetworkAvailable() : Boolean = NetworkUtil.isNetworkAvailable(context)
+    private fun isNetworkAvailable(): Boolean = NetworkUtil.isNetworkAvailable(context)
 
     /**
      * 通貨リスト取得
@@ -77,30 +77,21 @@ class MainViewModel(
      *  「USD基準選択された通貨の為替レートセット
      */
     fun setUsdToOthersExchangeRateList() {
-        if (time.shouldLoadFromRemote()) {
-            if (!isNetworkAvailable()) {
-                mutableError.value = ErrorType.FROM_LOCAL
-                return
-            }
-            // 為替レートリスト取得
-            exchangeRateService.loadFromRemote()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ exchangeRate ->
-                    // 成功時、ローカルへ保存
-                    time.saveCurrentTime()
-                    exchangeRateService.saveToLocal(exchangeRate)
-                    usdToOthersExchangeRateList = exchangeRate.liveList
-                    setUsdToSelectedCurrencyExchangeRate()
-                }, {
-                    mutableError.value = ErrorType.FROM_REMOTE_CHANGE_RATE
-                })
-                .addTo(disposables)
-        } else {
-            val exchangeRates = exchangeRateService.loadFromLocal()
-            usdToOthersExchangeRateList = exchangeRates.liveList
-            setUsdToSelectedCurrencyExchangeRate()
+        if (!isNetworkAvailable()) {
+            mutableError.value = ErrorType.FROM_LOCAL
+            return
         }
+        // 為替レートリスト取得
+        exchangeRateService.load()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ exchangeRate ->
+                usdToOthersExchangeRateList = exchangeRate.liveList
+                setUsdToSelectedCurrencyExchangeRate()
+            }, {
+                mutableError.value = ErrorType.FROM_REMOTE_CHANGE_RATE
+            })
+            .addTo(disposables)
     }
 
     /**
@@ -121,7 +112,7 @@ class MainViewModel(
             it.copy(
                 first = displayedCurrencyName,
                 // 為替レート更新
-                second = Utils.calculateSelectedCurrencyToTargetExchangeRate(
+                second = CalculatorUtil.calculateSelectedCurrencyToTargetExchangeRate(
                     usdToSelectedCurrencyExchangeRate,
                     inputNumber,
                     usdToTargetExchangeRate

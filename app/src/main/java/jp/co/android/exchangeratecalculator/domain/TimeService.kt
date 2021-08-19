@@ -2,6 +2,9 @@ package jp.co.android.exchangeratecalculator.domain
 
 import jp.co.android.exchangeratecalculator.repository.TimeRepository
 
+/**
+ * 時間取得/保存用Service
+ */
 class TimeService(
     private val timeRepository: TimeRepository = TimeRepository()
 ) {

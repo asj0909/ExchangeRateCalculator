@@ -4,18 +4,28 @@ import io.reactivex.Single
 import jp.co.android.exchangeratecalculator.repository.ExchangeRateLocalRepositoryImpl
 import jp.co.android.exchangeratecalculator.repository.ExchangeRateRemoteRepositoryImpl
 
+/**
+ * 為替レート取得/保存用Service
+ */
 class ExchangeRateService(
     private val remoteRepositoryImpl: ExchangeRateRemoteRepository = ExchangeRateRemoteRepositoryImpl(),
-    private val localRepository: ExchangeRateLocalRepository = ExchangeRateLocalRepositoryImpl()
+    private val localRepository: ExchangeRateLocalRepository = ExchangeRateLocalRepositoryImpl(),
+    private val time: TimeService = TimeService()
 ) {
 
-    fun loadFromRemote(): Single<ExchangeRate> =
-        remoteRepositoryImpl.load()
+    fun load(): Single<ExchangeRate> {
+        return if (time.shouldLoadFromRemote()) {
+            remoteRepositoryImpl.load().map {
+                time.saveCurrentTime()
+                saveToLocal(it)
+                it
+            }
+        } else {
+            localRepository.load()
+        }
+    }
 
-    fun loadFromLocal(): ExchangeRate =
-        localRepository.load()
-
-    fun saveToLocal(exchangeRates: ExchangeRate) =
+    private fun saveToLocal(exchangeRates: ExchangeRate) =
         localRepository.save(exchangeRates)
 }
 
@@ -27,7 +37,7 @@ interface ExchangeRateRemoteRepository {
 
 interface ExchangeRateLocalRepository {
 
-    fun load(): ExchangeRate
+    fun load(): Single<ExchangeRate>
     fun save(list: ExchangeRate)
 
 }

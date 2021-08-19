@@ -3,6 +3,9 @@ package jp.co.android.exchangeratecalculator.domain
 import io.reactivex.Single
 import jp.co.android.exchangeratecalculator.repository.CurrencyRepositoryImpl
 
+/**
+ * 通貨リスト取得用Service
+ */
 class CurrencyService(
     private val repositoryImpl: CurrencyRepository = CurrencyRepositoryImpl()
 ) {

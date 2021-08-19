@@ -2,14 +2,19 @@ package jp.co.android.exchangeratecalculator.repository
 
 import io.reactivex.Single
 import jp.co.android.exchangeratecalculator.constants.ApiUrl
-import jp.co.android.exchangeratecalculator.createHttpClient
+import jp.co.android.exchangeratecalculator.utils.createHttpClient
 import jp.co.android.exchangeratecalculator.domain.CurrencyList
 import jp.co.android.exchangeratecalculator.domain.CurrencyRepository
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+/**
+ * 通貨リストレポジトリ
+ */
 class CurrencyRepositoryImpl(
-    private val service: Service = createHttpClient(serviceClass = Service::class.java)
+    private val service: Service = createHttpClient(
+        serviceClass = Service::class.java
+    )
 ): CurrencyRepository {
 
     interface Service {
@@ -33,6 +38,9 @@ class CurrencyRepositoryImpl(
         } ?: CurrencyList(listOf())
 }
 
+/**
+ * DTO
+ */
 data class ListResponseData(
     val success: Boolean,
     val terms: String?,

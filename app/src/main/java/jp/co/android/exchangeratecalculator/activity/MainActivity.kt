@@ -1,22 +1,22 @@
 package jp.co.android.exchangeratecalculator.activity
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import jp.co.android.exchangeratecalculator.R
+import jp.co.android.exchangeratecalculator.adapter.ExchangeRateRecyclerViewAdapter
 import jp.co.android.exchangeratecalculator.viewmodel.MainViewModel
-import jp.co.android.exchangeratecalculator.adapters.ExchangeRateRecyclerViewAdapter
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.input_number_et
-import kotlinx.android.synthetic.main.activity_main.recycler_view
 
 class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, TextWatcher {
 
@@ -27,6 +27,8 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, Te
     private val recyclerViewAdapter by lazy {
         ExchangeRateRecyclerViewAdapter(this@MainActivity)
     }
+
+    lateinit var inputMethodManager: InputMethodManager
 
     private lateinit var spinnerAdapter: ArrayAdapter<String>
 
@@ -40,13 +42,14 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, Te
             layoutManager = LinearLayoutManager(
                 this@MainActivity, LinearLayoutManager.VERTICAL, false)
         }
-
+        input_number_et.isEnabled = false
+        // 通貨リスト取得
         viewModel.value.getCurrencyList()
-
+        // リスナー追加
         spinner.onItemSelectedListener = this
         input_number_et.addTextChangedListener(this)
-        input_number_et.isEnabled = false
 
+        // 通貨リストリスナー
         viewModel.value.currencyListData.observe(this, Observer {
             // 通貨リスト取得/表示
             spinnerAdapter = ArrayAdapter(this,
@@ -54,11 +57,11 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, Te
 
             spinner.adapter = spinnerAdapter
         })
-
+        // 為替レートリスナー
         viewModel.value.exchangeRateList.observe(this, Observer {
             updateList(it)
         })
-
+        // エラーリスナー
         viewModel.value.error.observe(this, Observer {
             when (it) {
                 MainViewModel.ErrorType.FROM_LOCAL -> {
@@ -84,14 +87,21 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, Te
 
     override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
         if (position == 0) {
+            input_number_et.setText("")
             input_number_et.isEnabled = false
             updateList(listOf())
             return
         }
 
         // 通貨が選択された時、為替レート取得
-        input_number_et.isEnabled = true
         val selectedCurrency = spinner.selectedItem.toString()
+        input_number_et.apply {
+            isEnabled = true
+            requestFocus()
+        }
+        inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.showSoftInput(input_number_et, 0)
+
         viewModel.value.selectedCurrencyName = selectedCurrency
         viewModel.value.setUsdToOthersExchangeRateList()
         viewModel.value.updateExchangeRateList(input_number_et.text.toString())
@@ -119,8 +129,12 @@ class MainActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener, Te
         AlertDialog.Builder(this)
             .setTitle("ERROR")
             .setMessage(message)
-            .setPositiveButton(resources.getString(R.string.confirm_text)) { _, _ ->
+            .setPositiveButton(resources.getString(R.string.confirm_button_text)) { _, _ ->
                 callback?.invoke()
             }
+            .setNegativeButton(resources.getString(R.string.cancel_button_text)) { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
             .show()
 }

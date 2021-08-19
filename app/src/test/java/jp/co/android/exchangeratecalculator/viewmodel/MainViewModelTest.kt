@@ -10,7 +10,7 @@ import io.reactivex.Single
 import io.reactivex.android.plugins.RxAndroidPlugins
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers
-import jp.co.android.exchangeratecalculator.Utils
+import jp.co.android.exchangeratecalculator.utils.CalculatorUtil
 import jp.co.android.exchangeratecalculator.domain.*
 import org.junit.Assert
 import org.junit.Before
@@ -27,14 +27,6 @@ class MainViewModelTest {
     private val mockTimeService: TimeService = mockk(relaxed = true)
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    private val testExchangeRate: ExchangeRate = ExchangeRate(
-        listOf(
-            Pair("USDJPY", "109.59"),
-            Pair("USDKRW", "1162.38"),
-            Pair("USDUSD", "1.0")
-        )
-    )
-
     @Before
     fun setUp() {
         // 同期処理にするように設定
@@ -45,7 +37,6 @@ class MainViewModelTest {
         viewModel = MainViewModel(
             mockCurrencyService,
             mockExchangeRateService,
-            mockTimeService,
             context
         )
     }
@@ -100,28 +91,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun setUsdToSelectedCurrencyExchangeRate_remote_ok() {
-        // リモートからデータ取得するように設定
-        every {
-            mockTimeService.shouldLoadFromRemote()
-        } returns true
-
-        every {
-            mockExchangeRateService.loadFromRemote()
-        } returns Single.just(testExchangeRate)
-
-        // 実行
-        viewModel.setUsdToOthersExchangeRateList()
-
-        // 成功時、データ更新有無確認
-        verify {
-            mockTimeService.saveCurrentTime()
-            mockExchangeRateService.saveToLocal(testExchangeRate)
-        }
-    }
-
-    @Test
-    fun setUsdToSelectedCurrencyExchangeRate_remote_true_error() {
+    fun setUsdToSelectedCurrencyExchangeRate_error() {
         // リモートからデータ取得するように設定
         every {
             mockTimeService.shouldLoadFromRemote()
@@ -132,7 +102,7 @@ class MainViewModelTest {
         viewModel.error.observeForever(errorDataObserver)
 
         every {
-            mockExchangeRateService.loadFromRemote()
+            mockExchangeRateService.load()
         } returns Single.error(Throwable())
 
         // 実行
@@ -141,22 +111,6 @@ class MainViewModelTest {
         // 失敗時、データ更新有無確認
         verify(exactly = 1) {
             errorDataObserver.onChanged(any())
-        }
-    }
-
-    @Test
-    fun setUsdToSelectedCurrencyExchangeRate_local() {
-        // ローカルからデータ取得するように設定
-        every {
-            mockTimeService.shouldLoadFromRemote()
-        } returns false
-
-        // 実行
-        viewModel.setUsdToOthersExchangeRateList()
-
-        // 成功時通るメソッド確認
-        verify {
-            mockExchangeRateService.loadFromLocal()
         }
     }
 
@@ -185,20 +139,20 @@ class MainViewModelTest {
         list.mapIndexed { index, pair ->
             if (index == 0) {
                 Assert.assertEquals("JPYJPY", pair.first)
-                val expected = Utils.calculateSelectedCurrencyToTargetExchangeRate(
+                val expected = CalculatorUtil.calculateSelectedCurrencyToTargetExchangeRate(
                     pair.second.toDouble(), "123".toDouble(), 109.59
                 )
                 Assert.assertEquals(expected, pair.second)
             }
             if (index == 1) {
                 Assert.assertEquals("JPYKRW", pair.first)
-                val expected = Utils.calculateSelectedCurrencyToTargetExchangeRate(
+                val expected = CalculatorUtil.calculateSelectedCurrencyToTargetExchangeRate(
                     pair.second.toDouble(), "123".toDouble(), 1162.38)
                 Assert.assertEquals(expected, pair.second)
             }
             if (index == 2) {
                 Assert.assertEquals("JPYUSD", pair.first)
-                val expected = Utils.calculateSelectedCurrencyToTargetExchangeRate(
+                val expected = CalculatorUtil.calculateSelectedCurrencyToTargetExchangeRate(
                     pair.second.toDouble(), "123".toDouble(), 1.0)
                 Assert.assertEquals(expected, pair.second)
             }

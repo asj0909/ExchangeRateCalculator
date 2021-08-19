@@ -1,4 +1,4 @@
-package jp.co.android.exchangeratecalculator
+package jp.co.android.exchangeratecalculator.utils
 
 import jp.co.android.exchangeratecalculator.constants.ApiUrl
 import okhttp3.OkHttpClient

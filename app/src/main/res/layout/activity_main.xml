@@ -7,35 +7,38 @@
     android:layout_height="match_parent"
     tools:context=".activity.MainActivity">
 
+    <!--　数字入力バー -->
     <EditText
         android:id="@+id/input_number_et"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:inputType="number"
+        android:hint=""
         android:textDirection="anyRtl"
-        app:layout_constraintTop_toTopOf="parent"
+
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- PullDownBar-->
     <Spinner
         android:id="@+id/spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:spinnerMode="dropdown"
         app:layout_constraintTop_toBottomOf="@id/input_number_et"
-        app:layout_constraintEnd_toEndOf="parent"
-        />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="@dimen/margin_base"
+        android:layout_marginBottom="@dimen/margin_base"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spinner"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/spinner" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

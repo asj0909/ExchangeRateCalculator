@@ -1,14 +1,18 @@
 package jp.co.android.exchangeratecalculator.repository
 
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import io.reactivex.Single
 import jp.co.android.exchangeratecalculator.application.MainApplication
 import jp.co.android.exchangeratecalculator.domain.ExchangeRateLocalRepository
 import jp.co.android.exchangeratecalculator.domain.ExchangeRate
 import java.lang.reflect.Type
 
+/**
+ * 為替レートリモートレポジトリ
+ */
 class ExchangeRateLocalRepositoryImpl(
     private val prefs: SharedPreferences? = PreferenceManager
         .getDefaultSharedPreferences(MainApplication.applicationContext()),
@@ -19,12 +23,12 @@ class ExchangeRateLocalRepositoryImpl(
         const val PREFS_EXCHANGE_RATES_KEY = "exchange_rates"
     }
 
-    override fun load(): ExchangeRate {
+    override fun load(): Single<ExchangeRate> {
         val json: String? = prefs?.getString(PREFS_EXCHANGE_RATES_KEY, null)
         val type: Type = object : TypeToken<ArrayList<Pair<String, String>>>() {}.type
         val loadedArrayList =
             gson.fromJson(json, type) as ArrayList<Pair<String, String>>
-        return ExchangeRate(loadedArrayList.toList())
+        return Single.just(ExchangeRate(loadedArrayList.toList()))
     }
 
     override fun save(exchangeRates: ExchangeRate) {

@@ -2,14 +2,19 @@ package jp.co.android.exchangeratecalculator.repository
 
 import io.reactivex.Single
 import jp.co.android.exchangeratecalculator.constants.ApiUrl
-import jp.co.android.exchangeratecalculator.createHttpClient
+import jp.co.android.exchangeratecalculator.utils.createHttpClient
 import jp.co.android.exchangeratecalculator.domain.ExchangeRateRemoteRepository
 import jp.co.android.exchangeratecalculator.domain.ExchangeRate
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+/**
+ * 為替レートローカルレポジトリ
+ */
 class ExchangeRateRemoteRepositoryImpl(
-    private val service: Service = createHttpClient(serviceClass = Service::class.java)
+    private val service: Service = createHttpClient(
+        serviceClass = Service::class.java
+    )
 ): ExchangeRateRemoteRepository {
 
     interface Service {
@@ -32,6 +37,9 @@ class ExchangeRateRemoteRepositoryImpl(
     }
 }
 
+/**
+ * DTO
+ */
 data class ExchangeRateResponseData(
     val success: Boolean,
     val terms: String?,

@@ -1,6 +1,6 @@
-package jp.co.android.exchangeratecalculator
+package jp.co.android.exchangeratecalculator.utils
 
-object Utils {
+object CalculatorUtil {
 
     /**
      * 選択された通貨基準、ターゲット通貨為替レート計算

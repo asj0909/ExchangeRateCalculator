@@ -1,9 +1,12 @@
 package jp.co.android.exchangeratecalculator.repository
 
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import jp.co.android.exchangeratecalculator.application.MainApplication
 
+/**
+ * 時間レポジトリ
+ */
 class TimeRepository(
     private val prefs: SharedPreferences? = PreferenceManager
         .getDefaultSharedPreferences(MainApplication.applicationContext())
